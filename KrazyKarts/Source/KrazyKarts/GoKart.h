@@ -27,19 +27,31 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MaxDrivingForce;
 
+	// Turn Rate
+	UPROPERTY(EditAnywhere)
+	float MaxDegreesPerSecond;
+
+
+
 	float Throttle;
+
+	float SterringThrow;
 /*
 * Methods *
 */
-public:
-	// Sets default values for this pawn's properties
-	AGoKart();
+private:
+	void ComputeForwardVelocity(float DeltaTime);
+	void UpdateLocationFromVelocity(float DeltaTime);
+	void ApplyRotation(float DeltaTime);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
+	// Sets default values for this pawn's properties
+	AGoKart();
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -47,6 +59,6 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void MoveForward(float Value);
-	void ProcessForwardMovement(float DeltaTime);
 
+	void MoveRight(float Value);
 };
