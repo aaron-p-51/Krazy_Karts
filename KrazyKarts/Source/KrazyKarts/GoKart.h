@@ -27,10 +27,15 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MaxDrivingForce;
 
-	// Turn Rate
 	UPROPERTY(EditAnywhere)
-	float MaxDegreesPerSecond;
+	float DragCoefficient = 16.0f;
 
+	UPROPERTY(EditAnywhere)
+	float RollingResistance;
+
+	// Min turning radius of car, full lock (m)
+	UPROPERTY(EditAnywhere)
+	float TurningRadius = 10.0f;
 
 
 	float Throttle;
@@ -43,6 +48,8 @@ private:
 	void ComputeForwardVelocity(float DeltaTime);
 	void UpdateLocationFromVelocity(float DeltaTime);
 	void ApplyRotation(float DeltaTime);
+	FVector GetAirResistanceForce();
+	FVector GetRollingResistance();
 
 protected:
 	// Called when the game starts or when spawned
@@ -58,6 +65,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	
 	void MoveForward(float Value);
 
 	void MoveRight(float Value);

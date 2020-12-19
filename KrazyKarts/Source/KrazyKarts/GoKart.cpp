@@ -6,6 +6,7 @@
 // Engine Includes
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Engine/World.h"
 
 static const int METERS_TO_CENTIMETERS = 100;
 
@@ -17,7 +18,7 @@ AGoKart::AGoKart()
 
 	Mass = 1000.0f;
 	MaxDrivingForce = 10000.0f;
-	MaxDegreesPerSecond = 90.0f;
+	RollingResistance = 0.015f;
 }
 
 // Called when the game starts or when spawned
@@ -32,7 +33,6 @@ void AGoKart::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	ComputeForwardVelocity(DeltaTime);
-
 	ApplyRotation(DeltaTime);
 	UpdateLocationFromVelocity(DeltaTime);	
 }
@@ -66,12 +66,29 @@ void AGoKart::ComputeForwardVelocity(float DeltaTime)
 	// full throttle backwards.
 	FVector Force = GetActorForwardVector() * MaxDrivingForce * Throttle;
 
+	// add the air and rolling resistance to the force applied from throttle
+	Force += GetAirResistanceForce();
+	Force += GetRollingResistance();
+
 	// Get Acceleration of car (F=m*a)
 	FVector Acceleration = Force / Mass;
+
+	float AccelerationDueToGravity = -GetWorld()->GetGravityZ() / 100;
 
 	// Using the current acceleration adjust the velocity. Acceleration in m/s^2 * s
 	// gives m/s. Acceleration can be negative to give backwards movement (Throttle -1 to 1)
 	Velocity = Velocity + Acceleration * DeltaTime;
+}
+
+FVector AGoKart::GetAirResistanceForce()
+{
+	return -Velocity.SizeSquared() * Velocity.GetSafeNormal() * DragCoefficient;
+}
+
+FVector AGoKart::GetRollingResistance()
+{
+	float NormalForceMagnitude = Mass * (-GetWorld()->GetGravityZ() / 100);
+	return -Velocity.GetSafeNormal() * RollingResistance * NormalForceMagnitude;
 }
 
 void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
@@ -90,11 +107,11 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 
 void AGoKart::ApplyRotation(float DeltaTime)
 {
-	float RotationAngle = MaxDegreesPerSecond * SterringThrow * DeltaTime;
-	FQuat RotationDelta(GetActorUpVector(), FMath::DegreesToRadians(RotationAngle));
+	float DeltaLocation = FVector::DotProduct(GetActorForwardVector(), Velocity) * DeltaTime;
+	float RotationAngle = DeltaLocation / TurningRadius * SterringThrow;
+	FQuat RotationDelta(GetActorUpVector(), RotationAngle);
 
 	Velocity = RotationDelta.RotateVector(Velocity);
 
 	AddActorWorldRotation(RotationDelta);
 }
-
